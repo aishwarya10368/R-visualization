@@ -1,2 +1,3 @@
 # R-visualization
 Crime and Meteorological Dataset Visualization
+This repository includes two separate analyses: crime data visualization and weather data analysis. The crime dataset for 2023 provides insights into criminal activity patterns, utilizing R and libraries like ggplot2, plotly, and leaflet to visualize various crime categories and identify hotspots. The Meteorological Dataset Visualization explores how weather patterns, such as temperature and precipitation, may influence crime trends. Each analysis is presented in distinct files for clarity, offering valuable insights for policymakers and law enforcement to enhance community safety.
