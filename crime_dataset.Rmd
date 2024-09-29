@@ -1,0 +1,84 @@
+---
+title: "Crime_Datasets"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r code1,include=FALSE}
+library(ggplot2)
+library(plotly)
+library(gplots)
+library(leaflet)
+crime<-read.csv("crime23.csv")
+```
+
+
+### Data visualization on Crime Data
+
+#### Introduction
+
+Crime datasets provide valuable insights into patterns, trends, and occurrences of criminal activities within a specific region or jurisdiction. Analyzing such datasets helps law enforcement agencies, policymakers, and researchers understand the dynamics of crime and devise strategies to address them effectively. The dataset provided contains information on various categories of crimes, including anti-social behavior, bicycle theft, and burglary. Each record includes details such as the category of the crime, date of occurrence, geographical coordinates (latitude and longitude), street information, and outcome status of the investigation.
+
+```{r code16}
+
+maplf <- leaflet(data = crime) %>%
+  addTiles() %>%
+  addCircleMarkers(lng = ~long, lat = ~lat, radius = 5, 
+                   color = ifelse(crime$category == "anti-social-behaviour", "blue",
+                                  ifelse(crime$category == "bicycle-theft", "red",
+                                         ifelse(crime$category == "burglary", "green",
+                                                ifelse(crime$category == "criminal-damage-arson", "orange",
+                                                       ifelse(crime$category == "drugs", "purple",
+                                                              ifelse(crime$category == "other-theft", "yellow",
+                                                                     ifelse(crime$category == "possession-of-weapons", "cyan",
+                                                                            ifelse(crime$category == "public-order", "magenta",
+                                                                                   ifelse(crime$category == "robbery", "navy",
+                                                                                          ifelse(crime$category == "shoplifting", "pink",
+                                                                                                 ifelse(crime$category == "theft-from-the-person", "violet",
+                                                                                                        ifelse(crime$category == "vehicle-crime", "skyblue",
+                                                                                                               ifelse(crime$category == "violent-crime", "teal",
+                                                                                                                      ifelse(crime$category == "other-crime", "lime", "black"))))))))))))) ),fill = TRUE, fillOpacity = 0.8, popup = ~category)
+                  
+maplf  
+```
+Here we have a map displaying various crime categories with different colored circles offers valuable insights into the spatial distribution of crime. By identifying clusters of similarly colored circles, it becomes evident where specific types of crimes are more prevalent, highlighting potential hotspots.Ultimately, these insights inform targeted interventions and resource allocation, enabling law enforcement agencies to deploy strategies effectively to address and prevent crime in communities.
+
+```{r code17}
+#Contingency table of crime counts by category and location type
+crime_tab <- table(crime$category, crime$location_type)
+print(crime_tab)
+```
+This analysis reveals notable variations in the occurrence of different types of crimes between these location types. For instance, while anti-social behavior and burglary predominantly occurred within Force jurisdiction, incidents of bicycle theft were more evenly distributed between BTP and Force locations. Additionally, criminal damage and arson, along with violent crimes, were prominently recorded under the Force location type. Conversely, categories like possession of weapons and theft from the person showed negligible occurrences in BTP locations
+
+```{r code 18}
+#Density plot of crime outcomes
+cleaned_data <- crime[!is.na(crime$outcome_status), ]
+densityplot <- ggplot(cleaned_data, aes(x = outcome_status, fill = outcome_status)) +
+  geom_density(alpha = 0.5) +
+  scale_fill_discrete(name = "Outcome Status") +
+  theme_minimal() +
+  labs(title = "Distribution of Crime Outcomes")
+densityplot <- densityplot + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 8))
+densityplot
+
+```
+
+Based on the above density plot of crime outcomes, it is evident that "Action to be taken by another organization" is the most frequent outcome status in the dataset, with a prominent peak indicating its high frequency. This suggests that a significant number of recorded incidents require action or intervention from organizations other than the police. While there are smaller peaks for some outcome statuses, indicating moderate frequencies, the majority of outcome statuses appear as wider distributions, suggesting less frequent occurrences
+
+```{r code19}
+#histogram showing distribution of crime categories
+crime_category_histogram <- plot_ly(x = ~crime$category, type = "histogram")
+crime_category_histogram <- crime_category_histogram %>% layout(
+  title = "Distribution of Crime Categories",
+  xaxis = list(title = "Crime Category"),
+  yaxis = list(title = "Frequency")
+)
+crime_category_histogram
+```
+The analysis of the crime dataset reveals a diverse landscape of criminal activities within the area covered. Violent crime emerges as the most prevalent category, underscoring the pressing need for interventions to address issues of safety and security. Anti-social behavior, shoplifting, and criminal damage follow closely, indicating the multifaceted nature of community safety concerns, ranging from interpersonal violence to public nuisance and property-related offenses. The significant frequency of public order offenses and vehicle crime further emphasizes the importance of maintaining order in public spaces and safeguarding personal property. Additionally, the presence of drug-related offenses and possession of weapons highlights the complexities associated with addressing underlying social and economic factors contributing to criminal behavior
+
+
+#### Conclusion
+In conclusion, the analysis of the crime dataset revealed several key insights into the nature and distribution of criminal activities within the studied region. We observed variations in the frequency and distribution of different types of crimes over time and across different locations. Hotspots of criminal activities were identified, which could serve as focal points for targeted law enforcement efforts. Additionally, the outcome status of investigations provided insights into the efficacy of law enforcement efforts and the challenges in prosecuting offenders.This analysis contributes to a better understanding of crime dynamics and can inform the development of proactive measures to prevent and combat crime effectively in the community. 

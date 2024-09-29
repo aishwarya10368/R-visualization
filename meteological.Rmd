@@ -1,0 +1,304 @@
+---
+title: "Meteorological data"
+
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r code1,include=FALSE}
+library(ggplot2)
+library(plotly)
+library(gplots)
+library(leaflet)
+temp<-read.csv("temp2023.csv")
+```
+### Data visualization on Weather Data
+
+#### Introduction
+
+In today's data-driven world, the analysis of weather data plays a crucial role in understanding the complex interplay of atmospheric variables and their impacts on various aspects of human life and natural ecosystems. The dataset provided offers a comprehensive collection of meteorological parameters, encompassing a wide range of variables that shape local climates and influence daily activities.In this analysis, we explore weather data, focusing on various meteorological parameters such as temperature, precipitation, sunshine duration, sea level pressure, wind gust, and humidity. By employing visualization techniques including bar plots, pie charts, dot plots, histograms, density plots, box plots, scatter plots, time series plots, sine curve fitting, violin plots, and pair plots, we aim to unravel the patterns, trends, and relationships within the dataset.
+
+
+```{r code2, warning=FALSE}
+
+#bar plot for precipitation by date
+temp$Date <- as.Date(temp$Date)
+color_palette <- colorRampPalette(c("lightblue", "blue", "darkblue", "navy", "black"))(21)
+precipitation_plot <- ggplot(temp, aes(x = Date, y = Precmm, fill = factor(round(Precmm)))) +
+  geom_bar(stat = "identity", color = "black", alpha = 0.6) +
+  scale_fill_manual(values = color_palette, 
+                    guide = "legend", name = "Precipitation (in mm)") +
+  labs(title = "Precipitation by Date",
+       x = "Date",
+       y = "Precipitation (in mm)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.position = "top", plot.title = element_text(hjust = 0.7,size=20))
+precipitation_plot
+
+```
+
+The  above bar plot displays precipitation levels over time, segmented into intervals from January 2023 to January 2024. From the observations, it appears that precipitation becomes more continuous just before July 2023, extending until a little after January 2023. The largest bars, indicating higher precipitation levels, are observed between October 2023 and January 2024, suggesting a pronounced increase in rainfall during this period, possibly corresponding to a rainy season. Additionally, tall bars are noted between July and October 2023, indicating significant precipitation events during this timeframe. Overall, the plot illustrates fluctuations in precipitation, with notable periods of increased rainfall observed in the later half of 2023 and early 2024.
+
+
+```{r code3, warning=FALSE}
+#Interactive pie chart to visualize the distribution of sunshine duration
+
+# Filter out NA values
+Filtered_temp_data <- temp[!is.na(temp$SunD1h), ]
+color_select <- c("RED", "#FFB6C1", "#FF69B4", "#FF1493", "#DB7093")
+
+# Calculate the percentage of sunshine duration for each category
+sunshine_percentage <- table(cut(Filtered_temp_data$SunD1h, breaks = 5)) / nrow(Filtered_temp_data) * 100
+
+# Create the pie chart 
+sunshine_duration <- plot_ly(labels = names(sunshine_percentage), 
+                                    values = sunshine_percentage, 
+                                    type = 'pie',
+                                    marker = list(colors = color_select)) %>%
+  layout(title = "Sunshine Distribution Overview",
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         showlegend = TRUE,
+         legend = list(
+           orientation = "h",
+           x = 0.5, y = -0.2
+         ))
+sunshine_duration
+
+```
+
+
+After filtering out the NA values, the analysis of sunshine duration categories reveals that a significant portion of the time experiences very low sunshine duration, constituting 37% of the observations. This suggests prolonged periods with minimal sunshine. Additionally, both low and moderate sunshine duration categories are prevalent, each accounting for 22% of the observations, indicating variability in sunshine duration. However, high and very high sunshine durations are relatively less common, representing 13% and 5% of the observations, respectively. This implies that extended periods of high sunshine are less frequent, with occasional instances of exceptionally high sunshine. This distribution provides the overall insights into the variability and prevalence of different levels of sunshine duration, which can be valuable for understanding weather patterns and their potential impacts.
+
+```{r code4,warning=FALSE,message=FALSE}
+#dot plot of temperature change over time
+temperature_dotplot <- ggplot(temp, aes(x = Date, y = TemperatureCAvg)) +
+  geom_point() +  
+  geom_smooth(method = "loess", se = FALSE, color = "green") +
+  labs(title = "Temperature Trends Over Time",
+       x = "Date",
+       y = "Temperature (°C)") +
+  theme_minimal() +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=0.5))
+temperature_dotplot <- ggplotly(temperature_dotplot)
+temperature_dotplot <- temperature_dotplot %>% 
+  layout(title = list(text = "Temperature Trends Over Time", x = 0.5))
+temperature_dotplot
+```
+
+The dot plot of temperature against dates illustrates a clear seasonal trend. Starting from January 2023, temperatures begin around 5 degrees Celsius, steadily rising to above 15 degrees by July 2023 and maintaining that level until October 2023. However, by January 2024, temperatures drop back below 5 degrees Celsius. This pattern reflects typical seasonal variations, with lower temperatures in winter (January) and higher temperatures in summer (July to October).
+
+```{r code5,warning=FALSE}
+#Interactive histogram for distribution of sea pressure
+# Adjusting the bin width as needed for a better representation of the data distribution
+bin_width <- 1
+sealevelpressure_histogram <- ggplot(temp, aes(x = PresslevHp)) +
+  geom_histogram(binwidth = bin_width, fill = "darkblue", color = "white", alpha = 0.8) +
+  labs(title = "Distribution of Sea Level Pressure",
+       x = "Sea Level Pressure (hPa)",
+       y = "Frequency") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5)) 
+sealevelpressure_histogram <- ggplotly(sealevelpressure_histogram)
+sealevelpressure_histogram
+```
+
+The histogram of sea level pressure readings above presents intriguing insights into the distribution of pressure values across the dataset. Initially, there is a notable scarcity of very low pressure readings, represented by a single bin below the midpoint of the frequency scale(with pressure level 967). Subsequently, as pressure values increase, the frequency distribution becomes more concentrated, culminating in a prominent peak above 15 on the frequency scale(with pressure level 1019), indicating a prevalent range of pressure readings in that region. Beyond this peak, there is a gradual decrease in frequency, signifying a tapering off of pressure readings towards higher values. Overall, the histogram highlights both the variability and concentration of sea level pressure readings within specific pressure ranges, with the majority of readings clustering around the 1020hPa range, suggesting that atmospheric pressure values around 1020hPa are the most common in the dataset.
+
+```{r code6,warning=FALSE}
+# Density plots for TemperatureCMin and TemperatureCMax
+temperature_density_plot <- ggplot(temp, aes(x = TemperatureCMin, fill = "TemperatureCMin")) +
+  geom_density(alpha = 0.5) +
+  geom_density(aes(x = TemperatureCMax, fill = "TemperatureCMax"), alpha = 0.5) +
+  labs(title = "Density Plot for Temperature",
+       x = "Temperature (°C)",
+       y = "Density") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5)) 
+peakvalue_TemperatureCMin <- density(temp$TemperatureCMin)$x[which.max(density(temp$TemperatureCMin)$y)]
+peakvalue_TemperatureCMax <- density(temp$TemperatureCMax)$x[which.max(density(temp$TemperatureCMax)$y)]
+temperature_density_plot <- temperature_density_plot +
+  annotate("text", x = peakvalue_TemperatureCMin, y = 0.01, label = paste("Peak:", round(peakvalue_TemperatureCMin, 2)), color = "blue", angle = 90, vjust = -0.5) +
+  annotate("text", x = peakvalue_TemperatureCMax, y = 0.01, label = paste("Peak:", round(peakvalue_TemperatureCMax, 2)), color = "red", angle = 90, vjust = -0.5) +
+  geom_vline(xintercept = peakvalue_TemperatureCMin, linetype = "dashed", color = "blue") +
+  geom_vline(xintercept = peakvalue_TemperatureCMax, linetype = "dashed", color = "red")
+temperature_density_plot
+```
+
+
+There are 2 density plots shown here. The density plot in blue represents TemperatureCMin, while the plot in red represents TemperatureCMax. Based on the observations, it appears that the density plots for both TemperatureCMax and TemperatureCMin exhibit a symmetrical distribution without significant skewness. However, a slight deviation or tilt below the primary peak suggests the presence of another smaller peak in the distribution. For TemperatureCMax, the primary peak occurs at approximately 5.38°C, while for TemperatureCMin, it occurs at around 12.24°C. This indicates that while the majority of temperature values cluster around these peaks, there may be secondary modes or patterns present in the dataset, contributing to the observed deviations from perfect symmetry.
+
+
+```{r code7,warning=FALSE}
+#Boxplot for Wind Gust Distribution
+windgust_boxplot <- ggplot(temp, aes(x = "", y = WindkmhGust)) +
+  geom_boxplot(fill = "lightblue", color = "black", alpha = 0.8, coef = 1.5) + 
+  geom_jitter(data = subset(temp, WindkmhGust > quantile(WindkmhGust, 0.75) + 1.5 * IQR(WindkmhGust) | 
+                              WindkmhGust < quantile(WindkmhGust, 0.25) - 1.5 * IQR(WindkmhGust)),
+              aes(x = "", y = WindkmhGust), color = "red", alpha = 0.6, width = 0.2) + 
+  labs(title = "Wind Gust Distribution",
+       y = "Wind Gust (km/h)",
+       x = NULL) + 
+  theme_minimal() + 
+  theme(plot.title = element_text(size = 16, hjust = 0.5), 
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) 
+windgust_boxplot
+```
+
+The absence of whiskers in the box plot suggests that the dataset does not contain extreme values beyond 1.5 times the interquartile range (IQR) from the quartiles. The line within the box represents the median, indicating the central tendency of the data. However, the presence of red dots above the box signifies outliers with higher wind gust values compared to the majority of the dataset. These outliers may indicate instances of exceptionally strong wind gusts recorded during the observed period.
+
+
+```{r code8,warning=FALSE}
+#Interactive scatterplot to visualize relation between sunshine and humidity
+sunshine_humidity <- ggplot(temp, aes(x = SunD1h, y = HrAvg)) +
+  geom_point(color = "orange", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") + 
+  labs(title = "Sunshine Duration vs. Average Relative Humidity",
+       x = "Sunshine Duration (hours)",
+       y = "Average Relative Humidity (%)") + 
+  theme_minimal() + 
+  theme(plot.title = element_text(size = 16, hjust = 0.5)) 
+sunshine_humidity <- ggplotly(sunshine_humidity)
+sunshine_humidity
+```
+
+The above scatter plot illustrates a complex relationship between sunshine duration and average relative humidity. Initially, as sunshine duration increases, there is a corresponding rise in average relative humidity. However, this trend reverses beyond a certain point, with increasing sunshine duration associated with decreasing average relative humidity. The random spread of data points suggests variability in this relationship, indicating that factors beyond sunshine duration alone may influence average relative humidity. The scatter plot overall highlights a nonlinear relationship between these variables, emphasizing the intricate dynamics at play in their interaction.
+
+
+```{r code9}
+# Calculating Correlation Matrix for Temperature Data
+selected_columns <- c("TemperatureCAvg", "TemperatureCMax")
+data_subset <- temp[selected_columns]
+data_subset <- na.omit(data_subset)
+correlation_matrix <- cor(data_subset)
+correlation <- correlation_matrix["TemperatureCAvg", "TemperatureCMax"]
+print(correlation_matrix)
+print(correlation)
+```
+
+```{r code10,warning=FALSE}
+#scatterplot for TemperatureCAvg vs TemperatureCMax
+ggplot(temp, aes(x = TemperatureCAvg, y = TemperatureCMax)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "TemperatureCAvg", y = "TemperatureCMax", title = "TemperatureCAvg vs TemperatureCMax")+ theme(plot.title = element_text(hjust = 0.5))
+heatmap.2(correlation_matrix,          
+          trace = "none",              
+          main = "Correlation Heatmap",
+          col = colorRampPalette(c("green", "white", "yellow"))(100), 
+          dendrogram = "none",         
+          margins = c(5, 10),          
+          keysize = 1.5,               
+          key.title = NA,              
+          labRow = c("TemperatureCAvg"),  
+          labCol = c("TemperatureCMax"),  
+          cexRow = 0.8,                 
+          cexCol = 0.8,                 
+          addtext = TRUE,              
+          textCol = "black",           
+          srtCol = 0,                 
+          adjCol = c(0.5, 0.5),       
+          cellnote = round(correlation_matrix, 2),  
+          notecol = "black",           
+          notecex = 0.8)               
+```
+
+
+
+The correlation analysis between TemperatureCAvg and TemperatureCMax reveals a strong positive linear relationship, with a correlation coefficient of approximately 0.976. The scatter plot illustrates an upward trend, indicating that as TemperatureCAvg increases, TemperatureCMax tends to increase as well. Most data points cluster closely around the regression line, indicating that they follow the general trend. However, a few outliers suggest some variability in the relationship. Overall, the analysis suggests a robust and coherent association between TemperatureCAvg and TemperatureCMax in the dataset.
+
+
+```{r code11}
+#Interactive Box Plot of Average Temperature by Month
+temp$Date <- as.Date(temp$Date)
+temp$Month <- factor(format(temp$Date, "%b"), 
+                   levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))# Abbreviated month name (e.g., Jan, Feb, ...)
+box_plot<-ggplot(temp, aes(x = Month, y = TemperatureCAvg)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  labs(x = "Month", y = "Average Temperature (°C)",
+       title = "Box Plot of Average Temperature by Month") +
+  theme_minimal()
+box_plot <- ggplotly(box_plot)
+box_plot
+
+```
+
+The results show the distribution of average temperatures for each month of the year. In January, temperatures range from -2.60°C to 10.50°C, with a median of 4.60°C. February exhibits slightly higher temperatures, ranging from 1.50°C to 11.70°C, with a median of 5.85°C. March sees a similar trend, with temperatures ranging from 0.50°C to 11.60°C and a median of 4.90°C. April experiences temperatures from 4.60°C to 10.10°C, with a median of 8.15°C. May has a wider range, from 8.10°C to 14.20°C, and a median of 11.70°C. June exhibits warmer temperatures, ranging from 10.50°C to 21.90°C, with a median of 18.00°C. July shows temperatures peaking at 21.80°C, with a median of 16.70°C. August sees temperatures ranging from 12.20°C to 19.81°C, with a median of 17.40°C. September experiences temperatures from 12.00°C to 23.10°C, with a median of 16.80°C. October has temperatures ranging from 5.30°C to 17.70°C, with a median of 12.70°C. November sees temperatures ranging from -1.10°C to 11.70°C, with a median of 7.50°C. December closes the year with temperatures from -2.40°C to 12.50°C, and a median of 7.90°C. The presence of dots below and above the boxplots represents outliers, indicating unusually high or low temperatures for each respective month.The positioning of the median line, predominantly in the middle or above for most months, suggests a tendency towards moderate to higher temperatures on average. In the few instances where the median falls below the middle, it indicates comparatively lower average temperatures for those specific months. Overall, the interpretation highlights a general trend of moderate to higher temperatures across most observed months, with some variability in certain months showing lower average temperatures.
+
+
+```{r code12}
+#Time series plot
+temp$Date <- as.Date(temp$Date)
+plot(temp$Date, temp$TemperatureCAvg, type = "l", 
+     xlab = "Date", ylab = "Average Temperature (°C)",
+     main = "Time Series Plot of Average Temperature")
+```
+
+A distributed random distribution in a time series plot suggests that the average temperature data points appear scattered across the plot without any discernible pattern or trend over time. This randomness could indicate a lack of consistent or predictable fluctuations in temperature, which may be influenced by various factors such as weather patterns, seasonal changes, or other external variables.
+
+
+```{r code 13}
+# Extract month and year from the date
+temp$Month <- format(temp$Date, "%m")
+temp$Year <- format(temp$Date, "%Y")
+# Aggregate temperature data by month
+monthly_avg <- aggregate(TemperatureCAvg ~ Year + Month, data = temp, FUN = mean)
+# Convert month to numeric for plotting
+monthly_avg$Month <- as.numeric(monthly_avg$Month)
+# Fit a sine curve to the data
+fit <- lm(TemperatureCAvg ~ sin(2*pi*Month/12) + cos(2*pi*Month/12), data = monthly_avg)
+# Predict temperature using the fitted model
+monthly_avg$Predicted <- predict(fit)
+# Plot the data and the fitted sine curve using ggplot
+sine_plot <- ggplot(monthly_avg, aes(x = Month, y = TemperatureCAvg)) +
+  geom_point() +
+  geom_line(aes(y = Predicted), color = "red") +
+  labs(x = "Month", y = "Average Temperature (°C)", title = "Seasonal Temperature Variation") +
+  theme_minimal()+ theme(plot.title = element_text(hjust = 0.5))
+sine_plot <- ggplotly(sine_plot)
+sine_plot
+
+```
+
+In the above sine plot the x-axis values represent the months of the year, encoded as numeric values from 1 to 12. Each numeric value corresponds to a specific month, with 1 representing January, 2 representing February, and so on, up to 12, which represents December.The seasonal temperature variation plot illustrates the relationship between months of the year and average temperatures, employing a fitted sine curve to capture the cyclical pattern. Each data point represents the average temperature recorded for a specific month across multiple years, showcasing the actual fluctuations. The red sine curve depicts the modeled seasonal temperature changes, oscillating to reflect the yearly pattern. Peaks and troughs in the curve signify periods of highest and lowest temperatures, respectively, aiding in identifying seasonal extremes. Additionally, the curve's phase shift highlights the timing of temperature peaks and troughs relative to the calendar year. 
+
+
+```{r code 14}
+#violin plot for distribution of average temperatures for different months
+temp$Date <- as.Date(temp$Date)
+# Extract month from the date
+temp$Month <- factor(format(temp$Date, "%b"), 
+                     levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")) 
+temperature_violin_plot <- ggplot(temp, aes(x = Month, y = TemperatureCAvg, fill = Month)) +
+  geom_violin() +
+  labs(title = "Temperature Distribution by Month",
+       x = "Month",
+       y = "Average Temperature (°C)") +
+  theme_minimal()+ theme(plot.title = element_text(hjust = 0.5))
+temperature_violin_plot
+```
+The above violin plot displays the distribution of average temperatures across different months. Each "violin" represents a month, and its width corresponds to the frequency or density of temperatures for that specific month. The plot provides insights into the variability and central tendency of temperatures throughout the year. For instance, wider sections of the violins indicate periods of greater temperature variability, while narrower sections suggest more consistent temperature ranges. Analyzing the violins collectively allows for comparisons of temperature distributions between months, revealing patterns such as seasonal temperature trends or months with particularly wide or narrow temperature ranges
+
+
+
+
+
+```{r code15}
+#Interactive pairplot on relationship between temperature and precipitation
+pair_plot <- ggplot(temp, aes(x = TemperatureCAvg, y = Precmm)) +
+  geom_point() +
+  labs(x = "Temperature (°C)", y = "Precipitation (mm)", title = "Temperature vs. Precipitation") +
+  theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
+pairplot <- ggplotly(pair_plot)
+pairplot
+```
+The interactive pair plot offers a comprehensive view of the relationship between temperature and precipitation in the dataset. Each point on the plot represents a specific combination of temperature and precipitation values.The observation that there are more points at lower levels of precipitation and fewer as you move towards higher levels suggests that lower levels of precipitation are more common in the dataset. This distribution might indicate that instances of high precipitation are relatively rare compared to lower precipitation levels. It could also imply that the dataset includes a wider range of conditions with lower precipitation values, while extreme precipitation events are less frequently recorded or occur less frequently in the data collection period.
+
+#### Conclusion
+The analysis of weather data has provided valuable insights into the meteorological conditions during this period. The visualizations unveiled notable patterns and trends, including seasonal fluctuations in temperature, precipitation, and sunshine duration. We observed a pronounced increase in rainfall between October 2023 and January 2024, indicative of a possible rainy season. Additionally, the analysis revealed a complex relationship between sunshine duration and humidity, highlighting the intricate dynamics of weather variables. Furthermore, the correlation analysis demonstrated a strong positive linear relationship between average daily temperature and maximum temperature, suggesting coherent temperature patterns within the dataset
+
